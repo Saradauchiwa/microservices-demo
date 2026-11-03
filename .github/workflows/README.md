@@ -1,51 +1,56 @@
-# GitHub Actions Workflows
+# Workflows GitHub Actions
 
-This page describes the CI/CD workflows for the Online Boutique app, which run in [Github Actions](https://github.com/GoogleCloudPlatform/microservices-demo/actions).
+Cette page présente les workflows GitHub Actions utilisés pour effectuer des vérifications automatiques sur le dépôt du projet.
+
+Les GitHub Actions permettent de contrôler la qualité et la cohérence des fichiers du projet. Le pipeline principal de CI/CD sera, quant à lui, réalisé avec Jenkins.
 
 ## Infrastructure
 
-The CI/CD pipelines for Online Boutique run on standard GitHub-hosted runners (Ubuntu). 
+Les workflows GitHub Actions s'exécutent sur des runners Ubuntu hébergés par GitHub.
 
-We also host a test GKE cluster, which is where the deploy tests run. Every PR has its own namespace in the cluster.
+L'environnement de déploiement cible est une infrastructure Kubernetes locale composée de trois machines virtuelles :
+- Un nœud control plane.
+- Deux nœuds workers.
+
+Les outils Jenkins, SonarQube, Trivy et le registre privé local seront hébergés sur une quatrième machine virtuelle.
 
 ## Workflows
 
-**Note**: In order for the current CI/CD setup to work on your pull request, you must branch directly off the repo (no forks). This is because the Github secrets necessary for these tests aren't copied over when you fork.
+### Tests du code — [ci-pr.yaml](ci-pr.yaml)
 
-### Code Tests - [ci-pr.yaml](ci-pr.yaml)
+Ce workflow exécute des tests automatisés lors des événements définis dans sa configuration.
 
-These tests run on every commit for every open PR, as well as any commit to main / any release branch. Currently, this workflow runs only Go unit tests.
+Il permet notamment de vérifier le fonctionnement de certains composants du projet à l'aide de tests unitaires.
 
+### Validation des manifestes Kubernetes — [kubevious-manifests-ci.yaml](kubevious-manifests-ci.yaml)
 
-### Deploy Tests- [ci-pr.yaml](ci-pr.yaml)
+Ce workflow vérifie les manifestes Kubernetes présents dans les répertoires `kubernetes-manifests/` et `kustomize/`.
 
-These tests run on every commit for every open PR, as well as any commit to main / any release branch. This workflow:
+Il permet de détecter certaines erreurs de configuration avant l'utilisation des manifestes dans l'environnement Kubernetes local.
 
-1. Creates a dedicated GKE namespace for that PR, if it doesn't already exist, in the PR GKE cluster.
-2. Uses `skaffold run` to build and push the images specific to that PR commit. Then skaffold deploys those images, via `kubernetes-manifests`, to the PR namespace in the test cluster.
-3. Tests to make sure all the pods start up and become ready.
-4. Gets the LoadBalancer IP for the frontend service.
-5. Comments that IP in the pull request, for staging.
+### Validation de la configuration Kustomize — [kustomize-build-ci.yaml](kustomize-build-ci.yaml)
 
-### Push and Deploy Latest - [push-deploy](push-deploy.yml)
+Ce workflow vérifie que la configuration Kustomize principale peut être générée correctement.
 
-This is the Continuous Deployment workflow, and it runs on every commit to the main branch. This workflow:
+Il utilise la commande :
 
-1. Builds the container images for every service, tagging as `latest`.
-2. Pushes those images to Google Container Registry.
+```bash
+kubectl kustomize kustomize/
+```
 
-Note that this workflow does not update the image tags used in `release/kubernetes-manifests.yaml` - these release manifests are tied to a stable `v0.x.x` release.
+Cette vérification permet de détecter les erreurs de génération des ressources Kubernetes.
 
-### Cleanup - [cleanup.yaml](cleanup.yaml)
+## Pipeline DevSecOps avec Jenkins
 
-This workflow runs on an hourly schedule (and can be triggered manually via `workflow_dispatch`) to delete PR-specific GKE namespaces (`pr<N>`) in the test cluster for pull requests that have been closed or merged.
+Le pipeline DevSecOps sera mis en place séparément avec Jenkins.
 
-### Manual Release Builder - [make-release.yaml](make-release.yaml)
+Il aura pour objectif d'automatiser les étapes suivantes :
 
-This workflow is manually triggered via the `workflow_dispatch` event to automate the release process. When run, it:
-1. Validates the release version format.
-2. Automates the build and push of container images to Google Cloud Build.
-3. Automatically regenerates Kubernetes manifests and Kustomize bases.
-4. Packages and pushes the Helm chart.
-5. Branches and tags the repository.
-6. Opens a new Pull Request targeting `main` with the release checklist.
+1. Récupération du code source depuis GitHub.
+2. Analyse de la qualité du code avec SonarQube.
+3. Construction des images Docker.
+4. Analyse des images avec Trivy.
+5. Publication des images validées dans le registre privé local.
+6. Déploiement des applications sur le cluster Kubernetes local.
+
+Les GitHub Actions et Jenkins ont donc des rôles complémentaires : les premières assurent des vérifications sur le dépôt, tandis que Jenkins prendra en charge le futur processus d'intégration et de déploiement DevSecOps.

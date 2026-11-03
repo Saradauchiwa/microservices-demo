@@ -1,64 +1,41 @@
-# Secure Online Boutique with Network Policies
+# Sécurisation du cluster avec les NetworkPolicies
 
-You can use [Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) enforcement to control the communication between your cluster's Pods and Services.
+Les NetworkPolicies Kubernetes permettent de contrôler les communications réseau entre les Pods et les Services du cluster.
 
-To use `NetworkPolicies` in Google Kubernetes Engine (GKE), you will need a GKE cluster with network policy enforcement enabled, the recommended approach is to use [GKE Dataplane V2](https://cloud.google.com/kubernetes-engine/docs/how-to/dataplane-v2).
+Elles contribuent à renforcer la sécurité en limitant les communications aux flux nécessaires au fonctionnement des microservices.
 
-To use `NetworkPolicies` on a local cluster such as [minikube](https://minikube.sigs.k8s.io/docs/start/), you will need to use an alternative CNI that supports `NetworkPolicies` like [Calico](https://projectcalico.docs.tigera.io/getting-started/kubernetes/minikube). To run a minikube cluster with Calico, run `minikube start --cni=calico`. By design, the minikube default CNI [Kindnet](https://github.com/aojea/kindnet) does not support it.  
+## Prérequis
 
-## Deploy Online Boutique with `NetworkPolicies` via Kustomize
+L'application des NetworkPolicies nécessite un plugin CNI (Container Network Interface) qui prend en charge leur application.
 
-To automate the deployment of Online Boutique integrated with fine granular `NetworkPolicies` (one per `Deployment`), you can leverage the following variation with [Kustomize](../..).
+Dans notre environnement Kubernetes local, le choix et la configuration du CNI devront être réalisés avant l'activation de ce composant.
 
-From the `kustomize/` folder at the root level of this repository, execute this command:
+Le simple fait de créer des ressources NetworkPolicy ne garantit pas leur application si le CNI ne prend pas en charge cette fonctionnalité.
 
-```bash
-kustomize edit add component components/network-policies
-```
+## Déploiement avec Kustomize
 
-This will update the `kustomize/kustomization.yaml` file which could be similar to:
+Ce composant permet d'intégrer des NetworkPolicies à la plateforme Online Boutique. Il prévoit des règles de filtrage réseau associées aux différents microservices.
 
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- base
-components:
-- components/network-policies
-```
+**Attention :** ce composant reste désactivé dans notre configuration principale tant que le CNI n'a pas été choisi et configuré.
 
-You can locally render these manifests by running `kubectl kustomize .` as well as deploying them by running `kubectl apply -k .`.
+Après validation du CNI, depuis le répertoire `kustomize/`, il sera possible de l'ajouter avec la commande `kustomize edit add component components/network-policies`.
 
-Once deployed, you can verify that the `NetworkPolicies` are successfully deployed:
+Les manifests peuvent ensuite être générés avec `kubectl kustomize .` et déployés avec `kubectl apply -k .`.
 
-```bash
-kubectl get networkpolicy
-```
+## Vérification
 
-The output could be similar to:
+Pour vérifier les NetworkPolicies présentes dans le cluster : `kubectl get networkpolicies`.
 
-```output
-NAME                    POD-SELECTOR                AGE
-adservice               app=adservice               2m58s
-cartservice             app=cartservice             2m58s
-checkoutservice         app=checkoutservice         2m58s
-currencyservice         app=currencyservice         2m58s
-deny-all                <none>                      2m58s
-emailservice            app=emailservice            2m58s
-frontend                app=frontend                2m58s
-loadgenerator           app=loadgenerator           2m58s
-paymentservice          app=paymentservice          2m58s
-productcatalogservice   app=productcatalogservice   2m58s
-recommendationservice   app=recommendationservice   2m58s
-redis-cart              app=redis-cart              2m58s
-shippingservice         app=shippingservice         2m58s
-```
+Pour examiner une règle particulière : `kubectl describe networkpolicy NOM_DE_LA_POLICY`.
 
-_Note: `Egress` is wide open in these `NetworkPolicies` . In our case, we do this is on purpose because there are multiple egress destinations to take into consideration like the Kubernetes DNS, Istio control plane (`istiod`), Cloud Trace API, Cloud Profiler API, etc._
+## Points de vigilance
 
-## Related Resources
+- Vérifier que le CNI prend en charge les NetworkPolicies.
+- Examiner les règles d'entrée (Ingress) et de sortie (Egress) avant leur activation.
+- Vérifier que les communications indispensables entre microservices restent autorisées.
+- Tester les règles après leur déploiement afin d'éviter de bloquer des fonctionnalités de l'application.
 
-- [GKE Dataplane V2 announcement](https://cloud.google.com/blog/products/containers-kubernetes/bringing-ebpf-and-cilium-to-google-kubernetes-engine)
-- [Kubernetes Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [Kubernetes Network Policy Recipes](https://github.com/ahmetb/kubernetes-network-policy-recipes)
-- [Network policy logging](https://cloud.google.com/kubernetes-engine/docs/how-to/network-policy-logging)
+## Ressources utiles
+
+- [Documentation Kubernetes : Network Policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Exemples de règles NetworkPolicy](https://github.com/ahmetb/kubernetes-network-policy-recipes)

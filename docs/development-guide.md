@@ -1,131 +1,130 @@
-# Development Guide 
+# Guide de développement
 
-This doc explains how to build and run the Online Boutique source code locally using the `skaffold` command-line tool.  
+Ce document présente les étapes nécessaires pour construire, vérifier et déployer l'application Online Boutique dans un environnement Kubernetes local à l'aide de la plateforme DevSecOps.
 
-## Prerequisites
+## 1. Présentation de l'architecture
 
-- [Docker for Desktop](https://www.docker.com/products/docker-desktop)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) (can be installed via `gcloud components install kubectl` for Option 1 - GKE)
-- [skaffold **2.0.2+**](https://skaffold.dev/docs/install/) (latest version recommended), a tool that builds and deploys Docker images in bulk. 
-- Clone the repository.
-    ```sh
-    git clone https://github.com/GoogleCloudPlatform/microservices-demo
-    cd microservices-demo/
-    ```
-- A Google Cloud project with Google Container Registry enabled. (for Option 1 - GKE)
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/) (optional for Option 2 - Local Cluster)
-- [Kind](https://kind.sigs.k8s.io/) (optional for Option 2 - Local Cluster)
+Le projet repose sur une infrastructure locale composée de quatre machines virtuelles :
 
-## Option 1: Google Kubernetes Engine (GKE)
+- **VM CI/CD** : héberge Jenkins, Docker Engine, SonarQube, Trivy et le registre privé d'images.
+- **VM Kubernetes Control Plane** : assure la gestion et l'orchestration du cluster Kubernetes.
+- **VM Kubernetes Worker 1** : héberge une partie des applications conteneurisées.
+- **VM Kubernetes Worker 2** : héberge une autre partie des applications conteneurisées.
 
-> 💡 Recommended if you're using Google Cloud and want to try it on
-> a realistic cluster. **Note**: If your cluster has Workload Identity enabled, 
-> [see these instructions](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#enable)
+Le code source de l'application est hébergé sur GitHub.
 
-1.  Create a Google Kubernetes Engine cluster and make sure `kubectl` is pointing
-    to the cluster.
+## 2. Prérequis
 
-    ```sh
-    gcloud services enable container.googleapis.com
-    ```
+Avant de commencer, les éléments suivants doivent être disponibles :
 
-    ```sh
-    gcloud container clusters create-auto online-boutique --region=us-central1 --labels dev-tutorial=online-boutique
-    ```
+- Git pour la gestion du code source.
+- Docker Engine pour la construction des images.
+- Jenkins pour l'automatisation du pipeline.
+- SonarQube pour l'analyse de la qualité du code.
+- Trivy pour l'analyse de sécurité des images.
+- Un registre privé local pour stocker les images.
+- Un cluster Kubernetes opérationnel composé d'un nœud de contrôle et de deux nœuds workers.
+- `kubectl` configuré pour communiquer avec le cluster.
 
-    ```
-    kubectl get nodes
-    ```
+Cloner le dépôt du projet :
 
-2.  Enable Artifact Registry (AR) on your GCP project and configure the
-    `docker` CLI to authenticate to AR:
+```bash
+git clone https://github.com/pepiteDK/microservices-demo.git
+cd microservices-demo
+```
 
-    ```sh
-    gcloud services enable artifactregistry.googleapis.com
-    ```
+## 3. Vérifier le cluster Kubernetes
 
-    ```sh
-    gcloud artifacts repositories create microservices-demo \
-      --repository-format=docker \
-      --location=us \
-    ```
+Depuis une machine disposant d'un accès au cluster, exécuter :
 
-    ```sh
-    gcloud auth configure-docker -q 
-    ```
+```bash
+kubectl get nodes
+```
 
-3.  In the root of this repository, run:
+Vérifier que le nœud de contrôle et les deux nœuds workers sont disponibles et dans l'état `Ready`.
 
-    ```
-    skaffold run --default-repo=us-docker.pkg.dev/PROJECT_ID/microservices-demo
-    ```
-    
-    Where `PROJECT_ID` is replaced by your Google Cloud project ID.
+## 4. Construire les images de l'application
 
-    This command:
+L'application Online Boutique est composée de plusieurs microservices indépendants.
 
-    - Builds the container images.
-    - Pushes them to AR.
-    - Applies the `./kubernetes-manifests` deploying the application to
-      Kubernetes.
+Chaque microservice dispose de son propre code source et de son Dockerfile dans le répertoire `src/`.
 
-    **Troubleshooting:** If you get "No space left on device" error on Google
-    Cloud Shell, you can build the images on Google Cloud Build: [Enable the
-    Cloud Build
-    API](https://console.cloud.google.com/flows/enableapi?apiid=cloudbuild.googleapis.com),
-    then run `skaffold run -p gcb --default-repo=us-docker.pkg.dev/[PROJECT_ID]/microservices-demo` instead.
+La construction des images est réalisée par le pipeline Jenkins.
 
-4.  Find the IP address of your application, then visit the application on your
-    browser to confirm installation.
+Le processus comprend les étapes suivantes :
 
-        kubectl get service frontend-external
+1. Récupération du code source depuis GitHub.
+2. Analyse de la qualité du code avec SonarQube.
+3. Construction des images Docker.
+4. Analyse de sécurité des images avec Trivy.
+5. Publication des images validées dans le registre privé local.
 
-5.  Navigate to `http://EXTERNAL-IP` to access the web frontend.
+## 5. Vérifier les manifestes Kubernetes
 
-## Option 2 - Local Cluster 
+Depuis la racine du dépôt, exécuter :
 
-1. Launch a local Kubernetes cluster with one of the following tools:
+```bash
+kubectl kustomize kustomize/
+```
 
-    - To launch **Minikube** (tested with Ubuntu Linux). Please, ensure that the
-       local Kubernetes cluster has at least:
-        - 4 CPUs
-        - 4.0 GiB memory
-        - 32 GB disk space
+Cette commande génère les manifestes Kubernetes sans les appliquer au cluster.
 
-      ```shell
-      minikube start --cpus=4 --memory 4096 --disk-size 32g
-      ```
+Elle permet de vérifier la configuration avant le déploiement.
 
-    - To launch **Docker for Desktop** (tested with Mac/Windows). Go to Preferences:
-        - choose “Enable Kubernetes”,
-        - set CPUs to at least 3, and Memory to at least 6.0 GiB
-        - on the "Disk" tab, set at least 32 GB disk space
+## 6. Déployer l'application
 
-    - To launch a **Kind** cluster:
+Lorsque les images sont disponibles dans le registre privé et que les manifestes sont correctement configurés, déployer l'application avec :
 
-      ```shell
-      kind create cluster
-      ```
+```bash
+kubectl apply -k kustomize/
+```
 
-2. Run `kubectl get nodes` to verify you're connected to the respective control plane.
+Vérifier ensuite l'état des Pods :
 
-3. Run `skaffold run` (first time will be slow, it can take ~20 minutes).
-   This will build and deploy the application. If you need to rebuild the images
-   automatically as you refactor the code, run `skaffold dev` command.
+```bash
+kubectl get pods -A
+```
 
-4. Run `kubectl get pods` to verify the Pods are ready and running.
+Afficher les services :
 
-5. Run `kubectl port-forward deployment/frontend 8080:8080` to forward a port to the frontend service.
+```bash
+kubectl get services
+```
 
-6. Navigate to `localhost:8080` to access the web frontend.
+## 7. Accéder au frontend
 
-## Adding a new microservice
+Le frontend n'est pas exposé par un Service de type LoadBalancer public.
 
-In general, the set of core microservices for Online Boutique is fairly complete and unlikely to change in the future, but it can be useful to add an additional optional microservice that can be deployed to complement the core services.
+Son accès doit respecter la configuration réseau retenue pour le cluster Kubernetes.
 
-See the [Adding a new microservice](adding-new-microservice.md) guide for instructions on how to add a new microservice.
+Pour un accès temporaire depuis une machine disposant de `kubectl`, utiliser la redirection de port :
 
-## Cleanup
+```bash
+kubectl get service frontend
+```
 
-If you've deployed the application with `skaffold run` command, you can run
-`skaffold delete` to clean up the deployed resources.
+Cette commande permet de vérifier le port exposé par le Service avant de configurer la redirection :
+
+```bash
+kubectl port-forward service/frontend 8080:<PORT_SERVICE>
+```
+
+Remplacer `<PORT_SERVICE>` par le port réellement déclaré dans le Service.
+
+L'application sera alors accessible à l'adresse :
+
+`http://localhost:8080`
+
+## 8. Ajouter un nouveau microservice
+
+Pour intégrer un nouveau microservice à l'application, consulter le guide [Ajouter un nouveau microservice](adding-new-microservice.md).
+
+## 9. Supprimer les ressources déployées
+
+Pour supprimer les ressources Kubernetes gérées par cette configuration Kustomize, exécuter :
+
+```bash
+kubectl delete -k kustomize/
+```
+
+Cette commande supprime les ressources déclarées dans la configuration Kustomize du projet.

@@ -1,39 +1,60 @@
-## Product Requirements
+# Exigences du projet
 
-This document contains a list of requirements that every change made to this repository should meet.
-Every change must:
-1. Preserve the golden user journey taken by Kubernetes beginners.
-1. Preserve the simplicity of demos.
-1. Preserve the simplicity of the GKE quickstart.
+Ce document présente les exigences que chaque modification apportée au dépôt doit respecter.
 
-These requirements are about the default deployment (default configuration) of Online Boutique.
-Changes that will violate any of these rules should not be built into the default configuration of Online Boutique.
-Such changes should be opt-in only — ideally, as a [Kustomize Component](https://github.com/GoogleCloudPlatform/microservices-demo/tree/main/kustomize) if they align with the [purpose of Online Boutique](/docs/purpose.md).
+Chaque modification doit :
 
-### 1. Preserve the golden user journey taken by Kubernetes beginners
+1. Préserver le parcours utilisateur principal de l'application Online Boutique.
+2. Préserver la simplicité de l'application et de ses démonstrations.
+3. Faciliter le déploiement de l'application dans un environnement Kubernetes local.
 
-The following statement about Online Boutique should always be true:
+Ces exigences concernent la configuration par défaut de l'application Online Boutique.
 
-> A user outside of Google can deploy Online Boutique's default configuration on a [_kind_ Kubernetes cluster](https://kind.sigs.k8s.io/).
+Toute modification susceptible de compromettre ces exigences ne doit pas être intégrée directement à la configuration par défaut. Elle doit être facultative et activable uniquement lorsque cela est nécessaire, idéalement sous la forme d'un composant Kustomize, lorsqu'elle correspond à l'objectif du projet.
 
-This statement describes the golden user journey that we expect new Kubernetes users to take while onboarding to Online Boutique.
+## 1. Préserver le parcours utilisateur des débutants Kubernetes
 
-Being able to run Online Boutique on a _kind_ cluster ensures that Online Boutique is free and cloud-agnostic. This is aligned with [Google's mission](https://about.google/) of making information universally accessible and useful. To be specific, Online Boutique should be useful and accessible to developers that are new to Kubernetes.
+L'application Online Boutique doit rester accessible aux développeurs qui découvrent Kubernetes.
 
-### 2. Preserve the simplicity of demos
+Un utilisateur doit pouvoir déployer la configuration par défaut de l'application sur un cluster Kubernetes local, sans dépendre d'un fournisseur de services cloud particulier.
 
-New changes should not complicate the primary user journey showcased in live demos and tutorials.
+Le projet doit rester accessible et reproductible dans un environnement local.
 
-Today, the primary user journey is as follows:
-1. Visit Online Boutique on a web browser.
-2. Select an item from the homepage and add the item to the cart.
-3. The checkout form is pre-populated with placeholder data (e.g. the shipping address).
-4. The user checks out and completes the order.
+La configuration proposée doit notamment permettre de comprendre les principales ressources Kubernetes utilisées par l'application, telles que les Deployments, les Services et les Pods.
 
-### 3. Preserve the simplicity of the GKE quickstart
+## 2. Préserver la simplicité des démonstrations
 
-New changes should not add additional complexity in the [main Online Boutique quickstart](https://github.com/GoogleCloudPlatform/microservices-demo#quickstart-gke).
+Les nouvelles modifications ne doivent pas compliquer le parcours utilisateur présenté dans les démonstrations et les tutoriels.
 
-In particular, new changes should not add extra required steps or additional required tools in that quickstart.
+Le parcours principal de l'application est le suivant :
 
-Ideally, extensions to Online Boutique's default functionality (such as a new microservice or a new cloud service integration) should be added as a [Kustomize Component](https://github.com/GoogleCloudPlatform/microservices-demo/tree/main/kustomize/components) which users can optionally opt into.
+1. Accéder à Online Boutique depuis un navigateur web.
+2. Sélectionner un article sur la page d'accueil et l'ajouter au panier.
+3. Remplir le formulaire de commande, qui contient des données de démonstration préremplies, notamment l'adresse de livraison.
+4. Valider la commande et finaliser l'achat.
+
+Les nouvelles fonctionnalités doivent préserver ce parcours et ne pas dégrader le fonctionnement des microservices existants.
+
+## 3. Préserver la simplicité du déploiement local
+
+Les nouvelles modifications ne doivent pas ajouter de complexité inutile au processus de déploiement de l'application dans notre infrastructure Kubernetes locale.
+
+En particulier, elles ne doivent pas imposer des outils ou des étapes supplémentaires sans justification technique.
+
+Les extensions de l'application, telles que l'ajout d'un nouveau microservice ou d'une nouvelle fonctionnalité, doivent être intégrées de manière modulaire.
+
+Dans la mesure du possible, les composants Kustomize doivent être utilisés pour permettre l'activation facultative de ces extensions.
+
+## 4. Respecter les exigences de la plateforme DevSecOps
+
+Toute modification apportée au projet doit également respecter les exigences de sécurité et de qualité de la plateforme DevSecOps.
+
+Les modifications doivent notamment :
+
+- Respecter les bonnes pratiques de conteneurisation avec Docker.
+- Faire l'objet d'une analyse de qualité du code avec SonarQube lorsque cela est applicable.
+- Faire l'objet d'une analyse de sécurité des images avec Trivy.
+- Utiliser le registre privé local pour les images validées.
+- Respecter les configurations de sécurité définies dans les manifestes Kubernetes.
+
+L'objectif est de préserver la simplicité de l'application tout en garantissant un processus de livraison sécurisé et reproductible.

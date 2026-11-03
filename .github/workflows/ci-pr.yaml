@@ -23,10 +23,6 @@ on:
       - 'LICENSE'
       - 'kustomize/**'
       - '.github/workflows/kustomize-build-ci.yaml'
-      - 'terraform/**'
-      - '.github/workflows/terraform-validate-ci.yaml'
-      - 'helm-chart/**'
-      - '.github/workflows/helm-chart-ci.yaml'
 
 # Ensure this workflow only runs for the most recent commit of a pull-request
 concurrency:

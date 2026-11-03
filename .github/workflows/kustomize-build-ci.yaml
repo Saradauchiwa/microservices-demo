@@ -1,3 +1,4 @@
+
 # Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 name: kustomize-build-ci
+
 on:
   push:
     branches:
@@ -20,26 +22,20 @@ on:
     paths:
       - 'kustomize/**'
       - '.github/workflows/kustomize-build-ci.yaml'
+
   pull_request:
     paths:
       - 'kustomize/**'
       - '.github/workflows/kustomize-build-ci.yaml'
+
+permissions:
+  contents: read
+
 jobs:
   kustomize-build-ci:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: kustomize build base
-        run: |
-          cd kustomize/
-          kubectl kustomize .
-      # Build the different combinations of Kustomize components found in kustomize/tests.
-      - name: kustomize build tests
-        run: |
-          cd kustomize/tests
-          KUSTOMIZE_TESTS_SUBFOLDERS=$(ls -d */)
-          for test in $KUSTOMIZE_TESTS_SUBFOLDERS;
-          do
-              echo "## kustomize build for " + $test
-              kustomize build $test
-          done
+
+      - name: Build Kustomize manifests
+        run: kubectl kustomize kustomize/

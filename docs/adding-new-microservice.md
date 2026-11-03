@@ -1,61 +1,70 @@
-# Adding a new microservice
+# Ajouter un nouveau microservice
 
-This document outlines the steps required to add a new microservice to the Online Boutique application.
+Ce document présente les étapes nécessaires pour ajouter un nouveau microservice à l'application Online Boutique.
 
-## 1. Create a new directory
+## 1. Créer un répertoire
 
-Create a new directory for your microservice within the `src/` directory. The directory name should be the name of your microservice.
+Créer un nouveau répertoire dans le dossier `src/`. Le nom du répertoire doit correspondre à celui du microservice.
 
-## 2. Add source code
+## 2. Ajouter le code source
 
-Place your microservice's source code inside the newly created directory. The structure of this directory should follow the conventions of the existing microservices. For example, a Python-based service would include at minimum the following files:
+Placer le code source du microservice dans le nouveau répertoire, en respectant les conventions utilisées par les microservices existants.
 
-- `README.md`: The service's description and documentation.
-- `main.py`: The application's entry point.
-- `requirements.in`: A list of Python dependencies.
-- `Dockerfile`: To containerize the application.
+Par exemple, un microservice développé en Python peut contenir les fichiers suivants :
 
-Take a look at existing microservices for inspiration.
+- `README.md` : description et documentation du service.
+- `main.py` : point d'entrée de l'application.
+- `requirements.in` : liste des dépendances Python.
+- `Dockerfile` : instructions nécessaires à la construction de l'image Docker.
 
-## 3. Create a Dockerfile
+Il est recommandé de consulter les microservices existants pour s'inspirer de leur organisation.
 
-Create a `Dockerfile` in your microservice's directory. This file will define the steps to build a container image for your service.
+## 3. Créer un Dockerfile
 
-Refer to this example and tweak based on your new service's needs: https://github.com/GoogleCloudPlatform/microservices-demo/blob/main/src/frontend/Dockerfile
+Créer un fichier `Dockerfile` dans le répertoire du microservice.
 
-## 4. Create Kubernetes manifests
+Ce fichier définit les différentes instructions nécessaires à la construction de son image Docker.
 
-Create a new directory under `kustomize/components/` in the root of the repository for your microservice. Inside this directory, add the necessary Kubernetes YAML files for your new microservice. This typically includes:
+Il doit être adapté au langage de programmation, aux dépendances et aux besoins du microservice.
 
-- A **Deployment** to manage your service's pods.
-- A **Service** to expose your microservice to other services within the cluster.
+## 4. Créer les manifestes Kubernetes
 
-Ensure you follow the existing naming conventions and that the container image specified in the Deployment matches the one built by your `cloudbuild.yaml` and `skaffold.yaml` files.
+Ajouter les manifestes Kubernetes du nouveau microservice dans le répertoire `kustomize/base/`.
 
-Refer to this example and tweak based on your new service's needs: https://github.com/GoogleCloudPlatform/microservices-demo/tree/main/kustomize/components/shopping-assistant
+Les ressources nécessaires comprennent généralement :
 
-## 5. Update the root `kustomization.yaml` file
+- **Deployment** : permet de gérer les Pods du microservice.
+- **Service** : permet d'assurer la communication entre ce microservice et les autres composants de l'application.
 
-Add your newly created component to the root kustomization file so it gets picked up by the deployment cycle.
+Respecter les conventions de nommage et les configurations de sécurité utilisées dans les manifestes existants.
 
-The file is available here: https://github.com/GoogleCloudPlatform/microservices-demo/blob/main/kustomize/kustomization.yaml
+L'image indiquée dans le Deployment doit correspondre à celle construite et publiée par le pipeline DevSecOps.
 
-## 6. Update the root `skaffold.yaml`
+## 5. Mettre à jour la configuration Kustomize
 
-Add your newly created service to the root skaffold file so the images build correctly.
+Déclarer les nouveaux manifestes dans le fichier `kustomize/base/kustomization.yaml` afin qu'ils soient pris en compte lors de la génération des ressources Kubernetes.
 
-The file is available here: https://github.com/GoogleCloudPlatform/microservices-demo/blob/main/skaffold.yaml
+Si le microservice nécessite une configuration particulière, vérifier si un composant Kustomize existant peut être réutilisé.
 
-## 7. Update the Helm chart
+## 6. Intégrer le microservice au pipeline DevSecOps
 
-Add your newly created service to the Helm chart templates and default values.
+Adapter le pipeline Jenkins pour prendre en compte le nouveau microservice dans les étapes concernées.
 
-The chart is available here: https://github.com/GoogleCloudPlatform/microservices-demo/tree/main/helm-chart
+Le processus doit notamment intégrer :
 
-## 8. Update the documentation
+- La récupération du code source depuis GitHub.
+- L'analyse de la qualité du code avec SonarQube.
+- La construction de l'image Docker.
+- L'analyse de sécurité de l'image avec Trivy.
+- La publication de l'image dans le registre privé local.
+- Le déploiement sur le cluster Kubernetes.
 
-Finally, update the project's documentation to reflect the addition of your new microservice. This may include:
+## 7. Mettre à jour la documentation
 
-- Adding a section to the main `README.md` if the service introduces significant new functionality.
-- Updating the architecture diagrams in the `docs/img` directory.
-- Adding a new document in the `docs` directory if the service requires detailed explanation.
+Mettre à jour la documentation du projet afin de présenter le nouveau microservice et ses fonctionnalités.
+
+Cela peut notamment comprendre :
+
+- La mise à jour du fichier `README.md` principal.
+- L'actualisation des schémas d'architecture dans `docs/img/`.
+- L'ajout d'un document spécifique si le microservice apporte de nouvelles fonctionnalités.

@@ -1,170 +1,152 @@
-<!-- <p align="center">
-<img src="/src/frontend/static/icons/Hipster_HeroLogoMaroon.svg" width="300" alt="Online Boutique" />
-</p> -->
-![Continuous Integration](https://github.com/GoogleCloudPlatform/microservices-demo/workflows/Continuous%20Integration%20-%20Main/Release/badge.svg)
+# Plateforme DevSecOps sécurisée — Online Boutique
 
-**Online Boutique** is a cloud-first microservices demo application.  The application is a
-web-based e-commerce app where users can browse items, add them to the cart, and purchase them.
+## Présentation du projet
 
-Google uses this application to demonstrate how developers can modernize enterprise applications using Google Cloud products, including: [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Cloud Service Mesh (CSM)](https://cloud.google.com/service-mesh), [gRPC](https://grpc.io/), [Cloud Operations](https://cloud.google.com/products/operations), [Spanner](https://cloud.google.com/spanner), [Memorystore](https://cloud.google.com/memorystore), [AlloyDB](https://cloud.google.com/alloydb), and [Gemini](https://ai.google.dev/). This application works on any Kubernetes cluster.
+Ce projet consiste à adapter l'application **Online Boutique**, initialement développée par Google, afin de concevoir et de mettre en œuvre une plateforme DevSecOps locale dédiée à l'automatisation et à la sécurisation du déploiement d'applications conteneurisées.
 
-If you’re using this demo, please **★Star** this repository to show your interest!
+Online Boutique est une application web de commerce électronique qui permet aux utilisateurs de parcourir un catalogue de produits, d'ajouter des articles à leur panier et de simuler une commande.
 
-**Note to Googlers:** Please fill out the form at [go/microservices-demo](http://go/microservices-demo).
+L'application repose sur une architecture distribuée composée de 11 microservices développés dans différents langages et communiquant entre eux à l'aide de gRPC.
 
-## Architecture
+## Objectifs du projet
 
-**Online Boutique** is composed of 11 microservices written in different
-languages that talk to each other over gRPC.
+L'objectif principal est de mettre en place une chaîne DevSecOps permettant d'intégrer des contrôles de qualité et de sécurité tout au long du processus de déploiement.
 
-[![Architecture of
-microservices](/docs/img/architecture-diagram.png)](/docs/img/architecture-diagram.png)
+Les objectifs spécifiques sont les suivants :
 
-Find **Protocol Buffers Descriptions** at the [`./protos` directory](/protos).
+- Conteneuriser les différents microservices avec Docker.
+- Automatiser les étapes d'intégration et de déploiement avec Jenkins.
+- Analyser la qualité du code source avec SonarQube.
+- Détecter les vulnérabilités des images conteneurisées avec Trivy.
+- Centraliser les images Docker dans un registre privé local.
+- Déployer les applications sur un cluster Kubernetes local.
+- Renforcer la sécurité des ressources et des déploiements Kubernetes.
 
-| Service                                              | Language      | Description                                                                                                                       |
-| ---------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| [frontend](/src/frontend)                           | Go            | Exposes an HTTP server to serve the website. Does not require signup/login and generates session IDs for all users automatically. |
-| [cartservice](/src/cartservice)                     | C#            | Stores the items in the user's shopping cart in Redis and retrieves it.                                                           |
-| [productcatalogservice](/src/productcatalogservice) | Go            | Provides the list of products from a JSON file and ability to search products and get individual products.                        |
-| [currencyservice](/src/currencyservice)             | Node.js       | Converts one money amount to another currency. Uses real values fetched from European Central Bank. It's the highest QPS service. |
-| [paymentservice](/src/paymentservice)               | Node.js       | Charges the given credit card info (mock) with the given amount and returns a transaction ID.                                     |
-| [shippingservice](/src/shippingservice)             | Go            | Gives shipping cost estimates based on the shopping cart. Ships items to the given address (mock)                                 |
-| [emailservice](/src/emailservice)                   | Python        | Sends users an order confirmation email (mock).                                                                                   |
-| [checkoutservice](/src/checkoutservice)             | Go            | Retrieves user cart, prepares order and orchestrates the payment, shipping and the email notification.                            |
-| [recommendationservice](/src/recommendationservice) | Python        | Recommends other products based on what's given in the cart.                                                                      |
-| [adservice](/src/adservice)                         | Java          | Provides text ads based on given context words.                                                                                   |
-| [loadgenerator](/src/loadgenerator)                 | Python/Locust | Continuously sends requests imitating realistic user shopping flows to the frontend.                                              |
+## Architecture de l'application
 
-## Screenshots
+Online Boutique est composée de 11 microservices :
 
-| Home Page                                                                                                         | Checkout Screen                                                                                                    |
-| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| [![Screenshot of store homepage](/docs/img/online-boutique-frontend-1.png)](/docs/img/online-boutique-frontend-1.png) | [![Screenshot of checkout screen](/docs/img/online-boutique-frontend-2.png)](/docs/img/online-boutique-frontend-2.png) |
+| Microservice | Langage | Rôle |
+|---|---|---|
+| [frontend](src/frontend) | Go | Expose l'interface web de l'application. |
+| [cartservice](src/cartservice) | C# | Gère le panier des utilisateurs avec Redis. |
+| [productcatalogservice](src/productcatalogservice) | Go | Fournit le catalogue des produits et permet leur recherche. |
+| [currencyservice](src/currencyservice) | Node.js | Effectue les conversions de devises. |
+| [paymentservice](src/paymentservice) | Node.js | Simule le traitement des paiements. |
+| [shippingservice](src/shippingservice) | Go | Calcule les frais de livraison et simule l'expédition. |
+| [emailservice](src/emailservice) | Python | Simule l'envoi des confirmations de commande. |
+| [checkoutservice](src/checkoutservice) | Go | Coordonne le processus de commande. |
+| [recommendationservice](src/recommendationservice) | Python | Propose des produits en fonction du panier. |
+| [adservice](src/adservice) | Java | Fournit des publicités contextuelles. |
+| [loadgenerator](src/loadgenerator) | Python / Locust | Génère du trafic pour simuler le comportement des utilisateurs. |
 
-## Quickstart (GKE)
+Redis est également utilisé pour le stockage des paniers.
 
-1. Ensure you have the following requirements:
-   - [Google Cloud project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#creating_a_project).
-   - Shell environment with `gcloud`, `git`, and `kubectl`.
+Le diagramme ci-dessous présente l'architecture fonctionnelle de l'application.
 
-2. Clone the latest major version.
+![Architecture des microservices](docs/img/architecture-diagram.png)
 
-   ```sh
-   git clone --depth 1 --branch v0 https://github.com/GoogleCloudPlatform/microservices-demo.git
-   cd microservices-demo/
-   ```
+Les descriptions Protocol Buffers sont disponibles dans le répertoire [protos](protos).
 
-   The `--depth 1` argument skips downloading git history.
+## Architecture de l'infrastructure DevSecOps
 
-3. Set the Google Cloud project and region and ensure the Google Kubernetes Engine API is enabled.
+L'infrastructure cible repose sur quatre machines virtuelles hébergées dans un environnement local.
 
-   ```sh
-   export PROJECT_ID=<PROJECT_ID>
-   export REGION=us-central1
-   gcloud services enable container.googleapis.com \
-     --project=${PROJECT_ID}
-   ```
+| Machine virtuelle | Rôle | Composants |
+|---|---|---|
+| VM 1 | Intégration et sécurité | Docker Engine, Jenkins, SonarQube, Trivy et registre privé local. |
+| VM 2 | Kubernetes Control Plane | Gestion du cluster Kubernetes. |
+| VM 3 | Kubernetes Worker 1 | Exécution des applications conteneurisées. |
+| VM 4 | Kubernetes Worker 2 | Exécution des applications conteneurisées. |
 
-   Substitute `<PROJECT_ID>` with the ID of your Google Cloud project.
+Le moteur Docker sera utilisé pour construire les images. Le cluster Kubernetes utilisera son propre environnement d'exécution de conteneurs.
 
-4. Create a GKE cluster and get the credentials for it.
+## Pipeline DevSecOps cible
 
-   ```sh
-   gcloud container clusters create-auto online-boutique \
-     --project=${PROJECT_ID} --region=${REGION} \
-     --labels dev-tutorial=online-boutique
-   ```
+Le processus d'automatisation envisagé suit les étapes suivantes :
 
-   Creating the cluster may take a few minutes.
+1. **Récupération du code source :** Jenkins récupère le code depuis le dépôt GitHub.
+2. **Analyse de qualité :** SonarQube examine le code source et détecte les problèmes de qualité.
+3. **Construction :** Docker construit les images des microservices.
+4. **Analyse de sécurité :** Trivy analyse les images à la recherche de vulnérabilités.
+5. **Publication :** les images validées sont envoyées vers le registre privé local.
+6. **Déploiement :** Jenkins déclenche le déploiement des applications sur le cluster Kubernetes.
 
-5. Deploy Online Boutique to the cluster.
+## Technologies utilisées
 
-   ```sh
-   kubectl apply -f ./release/kubernetes-manifests.yaml
-   ```
+| Domaine | Technologies |
+|---|---|
+| Gestion du code source | Git, GitHub |
+| Automatisation CI/CD | Jenkins |
+| Conteneurisation | Docker |
+| Analyse de qualité | SonarQube |
+| Analyse de vulnérabilités | Trivy |
+| Orchestration | Kubernetes |
+| Gestion des manifestes | Kustomize |
+| Registre d'images | Docker Registry |
+| Tests et validation | GitHub Actions, kubectl |
 
-6. Wait for the pods to be ready.
+## Organisation du dépôt
 
-   ```sh
-   kubectl get pods
-   ```
+```text
+microservices-demo/
+├── .github/
+│   └── workflows/           # Workflows GitHub Actions
+├── docs/                    # Documentation du projet
+├── kubernetes-manifests/    # Manifestes Kubernetes
+├── kustomize/
+│   ├── base/                 # Ressources Kubernetes de base
+│   ├── components/           # Composants de personnalisation
+│   └── tests/                # Scénarios de validation
+├── protos/                  # Descriptions Protocol Buffers
+├── src/                     # Code source des microservices
+└── README.md
+```
 
-   After a few minutes, you should see the Pods in a `Running` state:
+## Prérequis
 
-   ```
-   NAME                                     READY   STATUS    RESTARTS   AGE
-   adservice-76bdd69666-ckc5j               1/1     Running   0          2m58s
-   cartservice-66d497c6b7-dp5jr             1/1     Running   0          2m59s
-   checkoutservice-666c784bd6-4jd22         1/1     Running   0          3m1s
-   currencyservice-5d5d496984-4jmd7         1/1     Running   0          2m59s
-   emailservice-667457d9d6-75jcq            1/1     Running   0          3m2s
-   frontend-6b8d69b9fb-wjqdg                1/1     Running   0          3m1s
-   loadgenerator-665b5cd444-gwqdq           1/1     Running   0          3m
-   paymentservice-68596d6dd6-bf6bv          1/1     Running   0          3m
-   productcatalogservice-557d474574-888kr   1/1     Running   0          3m
-   recommendationservice-69c56b74d4-7z8r5   1/1     Running   0          3m1s
-   redis-cart-5f59546cdd-5jnqf              1/1     Running   0          2m58s
-   shippingservice-6ccc89f8fd-v686r         1/1     Running   0          2m58s
-   ```
+Pour travailler sur le projet, les outils suivants sont nécessaires :
 
-7. Access the web frontend in a browser using the frontend's external IP.
+- Git pour la gestion du code source.
+- Docker Engine pour la construction des images.
+- Jenkins pour l'automatisation du pipeline.
+- SonarQube pour l'analyse de qualité.
+- Trivy pour l'analyse de sécurité.
+- Kubernetes pour l'orchestration des conteneurs.
+- kubectl pour administrer le cluster.
+- Kustomize pour gérer les manifestes Kubernetes.
 
-   ```sh
-   kubectl get service frontend-external | awk '{print $4}'
-   ```
+## Vérification de la configuration Kubernetes
 
-   Visit `http://EXTERNAL_IP` in a web browser to access your instance of Online Boutique.
+La configuration Kustomize peut être générée avec la commande suivante :
 
-8. Congrats! You've deployed the default Online Boutique. To deploy a different variation of Online Boutique (e.g., with Google Cloud Operations tracing, Istio, etc.), see [Deploy Online Boutique variations with Kustomize](#deploy-online-boutique-variations-with-kustomize).
+```bash
+kubectl kustomize kustomize/
+```
 
-9. Once you are done with it, delete the GKE cluster.
+Cette commande permet de vérifier la génération des ressources Kubernetes avant leur déploiement.
 
-   ```sh
-   gcloud container clusters delete online-boutique \
-     --project=${PROJECT_ID} --region=${REGION}
-   ```
+Le déploiement sur le cluster sera effectué après la configuration du registre privé local et des références d'images correspondantes.
 
-   Deleting the cluster may take a few minutes.
-
-## Additional deployment options
-
-- **Terraform**: [See these instructions](/terraform) to learn how to deploy Online Boutique using [Terraform](https://www.terraform.io/intro).
-- **Istio / Cloud Service Mesh**: [See these instructions](/kustomize/components/service-mesh-istio/README.md) to deploy Online Boutique alongside an Istio-backed service mesh.
-- **Non-GKE clusters (Minikube, Kind, etc)**: See the [Development guide](/docs/development-guide.md) to learn how you can deploy Online Boutique on non-GKE clusters.
-- **AI assistant using Gemini**: [See these instructions](/kustomize/components/shopping-assistant/README.md) to deploy a Gemini-powered AI assistant that suggests products to purchase based on an image.
-- **And more**: The [`/kustomize` directory](/kustomize) contains instructions for customizing the deployment of Online Boutique with other variations.
+Pour les étapes détaillées de préparation de l'environnement et de déploiement, consulter le [guide de développement](docs/development-guide.md).
 
 ## Documentation
 
-- [Development](/docs/development-guide.md) to learn how to run and develop this app locally.
+- [Guide de développement](docs/development-guide.md)
+- [Objectif du projet](docs/purpose.md)
+- [Exigences du projet](docs/product-requirements.md)
+- [Configuration Kustomize](kustomize/README.md)
+- [Ajout d'un microservice](docs/adding-new-microservice.md)
+- [Workflows GitHub Actions](.github/workflows/README.md)
 
-## Demos featuring Online Boutique
+## Captures d'écran
 
-- [Security hardening of the OnlineBoutique sample apps with the Docker Hardened Images (DHI)](https://medium.com/google-cloud/security-hardening-of-the-onlineboutique-sample-apps-with-docker-hardened-images-dhi-ca1fad348343)
-- [alpine, distroless or scratch?](https://medium.com/google-cloud/alpine-distroless-or-scratch-caac35250e0b)
-- [Platform Engineering in action: Deploy the Online Boutique sample apps with Score and Humanitec](https://medium.com/p/d99101001e69)
-- [The new Kubernetes Gateway API with Istio and Anthos Service Mesh (ASM)](https://medium.com/p/9d64c7009cd)
-- [Use Azure Redis Cache with the Online Boutique sample on AKS](https://medium.com/p/981bd98b53f8)
-- [Sail Sharp, 8 tips to optimize and secure your .NET containers for Kubernetes](https://medium.com/p/c68ba253844a)
-- [Deploy multi-region application with Anthos and Google cloud Spanner](https://medium.com/google-cloud/a2ea3493ed0)
-- [Use Google Cloud Memorystore (Redis) with the Online Boutique sample on GKE](https://medium.com/p/82f7879a900d)
-- [Use Helm to simplify the deployment of Online Boutique, with a Service Mesh, GitOps, and more!](https://medium.com/p/246119e46d53)
-- [How to reduce microservices complexity with Apigee and Anthos Service Mesh](https://cloud.google.com/blog/products/application-modernization/api-management-and-service-mesh-go-together)
-- [gRPC health probes with Kubernetes 1.24+](https://medium.com/p/b5bd26253a4c)
-- [Use Google Cloud Spanner with the Online Boutique sample](https://medium.com/p/f7248e077339)
-- [Seamlessly encrypt traffic from any apps in your Mesh to Memorystore (redis)](https://medium.com/google-cloud/64b71969318d)
-- [Strengthen your app's security with Cloud Service Mesh and Anthos Config Management](https://cloud.google.com/service-mesh/docs/strengthen-app-security)
-- [From edge to mesh: Exposing service mesh applications through GKE Ingress](https://cloud.google.com/architecture/exposing-service-mesh-apps-through-gke-ingress)
-- [Take the first step toward SRE with Cloud Operations Sandbox](https://cloud.google.com/blog/products/operations/on-the-road-to-sre-with-cloud-operations-sandbox)
-- [Deploying the Online Boutique sample application on Cloud Service Mesh](https://cloud.google.com/service-mesh/docs/onlineboutique-install-kpt)
-- [Anthos Service Mesh Workshop: Lab Guide](https://codelabs.developers.google.com/codelabs/anthos-service-mesh-workshop)
-- [KubeCon EU 2019 - Reinventing Networking: A Deep Dive into Istio's Multicluster Gateways - Steve Dake, Independent](https://youtu.be/-t2BfT59zJA?t=982)
-- Google Cloud Next'18 SF
-  - [Day 1 Keynote](https://youtu.be/vJ9OaAqfxo4?t=2416) showing GKE On-Prem
-  - [Day 3 Keynote](https://youtu.be/JQPOPV_VH5w?t=815) showing Stackdriver
-    APM (Tracing, Code Search, Profiler, Google Cloud Build)
-  - [Introduction to Service Management with Istio](https://www.youtube.com/watch?v=wCJrdKdD6UM&feature=youtu.be&t=586)
-- [Google Cloud Next'18 London – Keynote](https://youtu.be/nIq2pkNcfEI?t=3071)
-  showing Stackdriver Incident Response Management
-- [Microservices demo showcasing Go Micro](https://github.com/go-micro/demo)
+| Page d'accueil | Écran de commande |
+|---|---|
+| ![Page d'accueil](docs/img/online-boutique-frontend-1.png) | ![Écran de commande](docs/img/online-boutique-frontend-2.png) |
+
+## Origine du projet
+
+Ce projet est une adaptation du dépôt [GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo).
+
+Les composants liés aux services cloud et aux solutions de déploiement non retenues ont été écartés afin de privilégier une infrastructure locale et une démarche DevSecOps centrée sur la qualité, la sécurité et l'automatisation.

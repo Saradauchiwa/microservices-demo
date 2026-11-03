@@ -1,140 +1,107 @@
-# Use Online Boutique with Kustomize
+# Déployer Online Boutique avec Kustomize
 
-This page contains instructions on deploying variations of the [Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo) sample application using [Kustomize](https://kustomize.io/). Each variations is designed as a [**Kustomize component**](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/components.md), so multiple variations can be composed together in the deployment.
+Ce dépôt utilise [Kustomize](https://kustomize.io/) pour gérer les manifestes Kubernetes de l'application Online Boutique.
 
-## What is Kustomize?
+L'objectif du projet est de préparer un déploiement local sur un cluster Kubernetes composé d'un nœud de contrôle et de deux nœuds workers.
 
-Kustomize is a Kubernetes configuration management tool that allows users to customize their manifest configurations without duplication. Its commands are built into `kubectl` as `apply -k`. More information on Kustomize can be found on the [official Kustomize website](https://kustomize.io/).
+## 1. Prérequis
 
-## Prerequisites
+Avant de déployer l'application, les éléments suivants doivent être disponibles :
 
-Optionally, [install the `kustomize` binary](https://kubectl.docs.kubernetes.io/installation/) to avoid manually editing a `kustomization.yaml` file. Online Boutique's instructions will often use `kustomize edit` (like `kustomize edit add component components/some-component`), but you can skip these commands and instead add components manually to the [`/kustomize/kustomization.yaml` file](/kustomize/kustomization.yaml).
+- Un cluster Kubernetes opérationnel.
+- `kubectl` configuré pour communiquer avec le cluster.
+- Un registre Docker privé accessible depuis les nœuds Kubernetes.
+- Les images des microservices construites et publiées dans ce registre.
 
-You need to have a Kubernetes cluster where you will deploy the Online Boutique's Kubernetes manifests. To set up a GKE (Google Kubernetes Engine) cluster, you can follow the instruction in the [root `/README.md`](/).
+La construction des images et leur analyse de sécurité sont prévues dans le pipeline DevSecOps.
 
-## Deploy Online Boutique with Kustomize
+## 2. Structure du répertoire
 
-1. From the root folder of this repository, navigate to the `kustomize/` directory.
+- `base/` : contient les manifestes Kubernetes des microservices et de Redis.
+- `components/` : contient les personnalisations réutilisables des manifestes.
+- `tests/` : répertoire réservé aux futurs scénarios de validation des composants Kustomize.
 
-    ```bash
-    cd kustomize/
-    ```
+## 3. Vérifier les manifestes
 
-1. See what the default Kustomize configuration defined by `kustomize/kustomization.yaml` will generate (without actually deploying them yet).
-
-    ```bash
-    kubectl kustomize .
-    ```
-
-1. Apply the default Kustomize configuration (`kustomize/kustomization.yaml`).
-
-    ```bash
-    kubectl apply -k .
-    ```
-
-1. Wait for all Pods to show `STATUS` of `Running`.
-
-    ```bash
-    kubectl get pods
-    ```
-
-    The output should be similar to the following:
-
-    ```terminal
-    NAME                                     READY   STATUS    RESTARTS   AGE
-    adservice-76bdd69666-ckc5j               1/1     Running   0          2m58s
-    cartservice-66d497c6b7-dp5jr             1/1     Running   0          2m59s
-    checkoutservice-666c784bd6-4jd22         1/1     Running   0          3m1s
-    currencyservice-5d5d496984-4jmd7         1/1     Running   0          2m59s
-    emailservice-667457d9d6-75jcq            1/1     Running   0          3m2s
-    frontend-6b8d69b9fb-wjqdg                1/1     Running   0          3m1s
-    loadgenerator-665b5cd444-gwqdq           1/1     Running   0          3m
-    paymentservice-68596d6dd6-bf6bv          1/1     Running   0          3m
-    productcatalogservice-557d474574-888kr   1/1     Running   0          3m
-    recommendationservice-69c56b74d4-7z8r5   1/1     Running   0          3m1s
-    shippingservice-6ccc89f8fd-v686r         1/1     Running   0          2m58s
-    ```
-
-    _Note: It may take 2-3 minutes before the changes are reflected on the deployment._
-
-1. Access the web frontend in a browser using the frontend's `EXTERNAL_IP`.
-
-    ```bash
-    kubectl get service frontend-external | awk '{print $4}'
-    ```
-
-    Note: you may see `<pending>` while GCP provisions the load balancer. If this happens, wait a few minutes and re-run the command.
-
-## Deploy Online Boutique variations with Kustomize
-
-Here is the list of the variations available as Kustomize components that you could leverage:
-
-- [**Change to the Cymbal Shops Branding**](components/cymbal-branding)
-  - Changes all Online Boutique-related branding to Google Cloud's fictitious company — Cymbal Shops. The code adds/enables an environment variable `CYMBAL_BRANDING` in the `frontend` service.
-- [**Integrate with Google Cloud Operations**](components/google-cloud-operations)
-  - Enables Monitoring (Stats), Tracing, and Profiler for various services within Online Boutique. The code adds the appropriare environment variables (`ENABLE_STATS`, `ENABLE_TRACING`, `DISABLE_PROFILER`) for each YAML config file.
-- [**Integrate with Memorystore (Redis)**](components/memorystore)
-  - The default Online Boutique deployment uses the in-cluster `redis` database for storing the contents of its shopping cart. The Memorystore deployment variation overrides the default database with its own Memorystore (Redis) database. These changes directly affect `cartservice`.
-- [**Integrate with Spanner**](components/spanner)
-  - The default Online Boutique deployment uses the in-cluster `redis` database for storing the contents of its shopping cart. The Spanner deployment variation overrides the default database with its own Spanner database. These changes directly affect `cartservice`.
-- [**Integrate with AlloyDB**](components/alloydb)
-  - The default Online Boutique deployment uses the in-cluster `redis` database for storing the contents of its shopping cart. The AlloyDB deployment variation overrides the default database with its own AlloyDB database.
-These changes directly affect `cartservice`.
-- [**Secure with Network Policies**](components/network-policies)
-  - Deploy fine granular `NetworkPolicies` for Online Boutique.
-- [**Update the registry name of the container images**](components/container-images-registry)
-- [**Update the image tag of the container images**](components/container-images-tag)
-- [**Add an image tag suffix to the container images**](components/container-images-tag-suffix)
-- [**Do not expose the `frontend` publicly**](components/non-public-frontend)
-- [**Set the `frontend` to manage only one single shared session**](components/single-shared-session)
-- [**Configure `Istio` service mesh resources**](components/service-mesh-istio)
-
-### Select variations
-
-To customize Online Boutique with its variations, you need to update the default `kustomize/kustomization.yaml` file. You could do that manually, use `sed`, or use the `kustomize edit` command like illustrated below.
-
-#### Use `kustomize edit` to select variations
-
-Here is an example with the [**Cymbal Shops Branding**](components/cymbal-branding) variation, from the `kustomize/` folder, run the command below:
+Depuis la racine du dépôt, exécuter :
 
 ```bash
-kustomize edit add component components/cymbal-branding
+kubectl kustomize kustomize/
 ```
 
-You could now combine it with other variations, like for example with the [**Google Cloud Operations**](components/google-cloud-operations) variation:
+Cette commande génère les manifestes Kubernetes sans les appliquer au cluster.
+
+Pour enregistrer le résultat dans un fichier :
 
 ```bash
-kustomize edit add component components/google-cloud-operations
+kubectl kustomize kustomize/ > manifests.yaml
 ```
 
-### Deploy selected variations
+## 4. Composants disponibles
 
-Like explained earlier, you can locally render these manifests by running `kubectl kustomize .` as well as deploying them by running `kubectl apply -k .`.
+Les composants conservés dans ce projet sont les suivants :
 
-So for example, the associated `kustomization.yaml` could look like:
+- **non-public-frontend** : supprime le Service `frontend-external` afin d'éviter l'exposition publique directe du frontend.
+- **network-policies** : permet de définir des règles de communication réseau entre les composants de l'application. Son activation dépend de la configuration réseau du cluster.
+- **container-images-tag** : permet de définir le tag des images des microservices.
+- **container-images-tag-suffix** : permet d'ajouter un suffixe aux tags des images.
+- **container-images-registry** : permet de remplacer les registres d'images par le registre privé local.
+
+Les composants liés au registre et aux tags seront activés lorsque le registre local et les conventions de nommage des images seront configurés.
+
+## 5. Configuration des composants
+
+Les composants actifs sont déclarés dans `kustomize/kustomization.yaml`.
+
+Exemple de configuration actuelle :
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- base
+  - base
+
 components:
-- components/cymbal-branding
-- components/google-cloud-operations
+  - components/non-public-frontend
 ```
 
-### Use remote Kustomize targets
+Les autres composants pourront être ajoutés à cette configuration après leur paramétrage.
 
-Kustomize allows you to reference public remote resources so the `kustomization.yaml` could look like:
+## 6. Déployer l'application
 
-```yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-- github.com/GoogleCloudPlatform/microservices-demo/kustomize/base
-components:
-- github.com/GoogleCloudPlatform/microservices-demo/kustomize/components/cymbal-branding
-- github.com/GoogleCloudPlatform/microservices-demo/kustomize/components/google-cloud-operations
+Une fois le cluster opérationnel, les images disponibles dans le registre privé et les manifestes configurés, le déploiement pourra être effectué avec :
+
+```bash
+kubectl apply -k kustomize/
 ```
 
-Learn more about [Kustomize remote targets](https://github.com/kubernetes-sigs/kustomize/blob/master/examples/remoteBuild.md).
+Vérifier ensuite l'état des ressources :
+
+```bash
+kubectl get pods -A
+```
+
+Pour afficher les services :
+
+```bash
+kubectl get services
+```
+
+## 7. Accéder au frontend
+
+Le composant `non-public-frontend` supprime le Service `frontend-external`.
+
+L'accès au frontend devra donc être configuré selon l'architecture réseau retenue pour le cluster, par exemple au moyen d'un accès interne ou d'un Ingress.
+
+## 8. Intégration DevSecOps
+
+Les manifestes Kubernetes constituent la dernière partie du processus de livraison.
+
+Le pipeline DevSecOps prévu suit les étapes suivantes :
+
+1. Récupération du code source depuis GitHub.
+2. Analyse de la qualité du code avec SonarQube.
+3. Construction des images Docker.
+4. Analyse de sécurité des images avec Trivy.
+5. Publication des images dans le registre privé local.
+6. Déploiement sur le cluster Kubernetes.
