@@ -18,23 +18,22 @@ pipeline {
         }
 
         stage('2. Analyse Sécurité Code (SonarQube)') {
-            steps {
-                echo '=== Étape 2 : Analyse statique du code – SAST ==='
-                dir('src/frontend') {
-                    sh """
-                    docker run --rm \
-                      -e SONAR_HOST_URL="${SONAR_HOST}" \
-                      -v "\$(pwd):/usr/src" \
-                      sonarsource/sonar-scanner-cli \
-                      -Dsonar.projectKey=boutique \
-                      -Dsonar.projectName="Boutique L3 TDSI" \
-                      -Dsonar.sources=. \
-                      -Dsonar.scm.disabled=true \
-                      -Dsonar.login="${SONAR_TOKEN}"
-                    """
-                }
-            }
-        }
+    steps {
+        echo '=== Étape 2 : Analyse statique du code – SAST ==='
+        sh """
+        docker run --rm \
+          -e SONAR_HOST_URL="${SONAR_HOST}" \
+          -v "\$(pwd):/usr/src" \
+          sonarsource/sonar-scanner-cli \
+          -Dsonar.projectKey=boutique \
+          -Dsonar.projectName="Boutique L3 TDSI" \
+          -Dsonar.sources=/usr/src/src \
+          -Dsonar.exclusions="**/vendor/**,**/*.pb.go,**/node_modules/**" \
+          -Dsonar.scm.disabled=true \
+          -Dsonar.login="${SONAR_TOKEN}"
+        """
+    }
+}
 
         stage('3. Build Image Docker') {
             steps {
