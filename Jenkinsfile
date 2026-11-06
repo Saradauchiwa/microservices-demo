@@ -27,7 +27,7 @@ pipeline {
                   -Dsonar.projectKey=boutique \
                   -Dsonar.sources=src/frontend \
                   -Dsonar.login=admin \
-                  -Dsonar.password=Admin12345!
+                  -Dsonar.password=Admin12345
                 """
             }
         }
