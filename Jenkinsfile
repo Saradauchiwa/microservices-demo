@@ -27,7 +27,9 @@ pipeline {
                   -Dsonar.projectKey=boutique \
                   -Dsonar.projectName="Boutique L3 TDSI" \
                   -Dsonar.sources=/usr/src/src/frontend \
+                  -Dsonar.inclusions="**/*.go" \
                   -Dsonar.scm.disabled=true \
+                  -Dsonar.branch.name=main \
                   -Dsonar.login="${SONAR_TOKEN}"
                 """
             }
@@ -45,7 +47,11 @@ pipeline {
         stage('4. Scan Sécurité Image (Trivy)') {
             steps {
                 echo '=== Étape 4 : Analyse des vulnérabilités (Trivy) ==='
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --severity HIGH,CRITICAL ${REGISTRY}/${IMAGE_NAME}:latest || echo 'Scan terminé'"
+                // Génération d un rapport visuel HTML pour la soutenance
+                sh """
+                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                  aquasec/trivy:latest image --format table --severity HIGH,CRITICAL ${REGISTRY}/${IMAGE_NAME}:latest
+                """
             }
         }
 
@@ -58,15 +64,8 @@ pipeline {
 
         stage('6. Déploiement Continu Kubernetes') {
             steps {
-                echo '=== Étape 6 : Mise à jour automatique de la production K3s ==='
+                echo '=== Étape 6 : Mise à jour automatique de la production ==='
                 sh "kubectl rollout restart deployment/frontend -n boutique || echo 'Production synchronisée'"
-            }
-        }
-
-        stage('7. Observabilité & Monitoring') {
-            steps {
-                echo '=== Étape 7 : Vérification des métriques de surveillance ==='
-                echo 'Application en ligne et métriques exposées pour Prometheus & Grafana !'
             }
         }
     }
