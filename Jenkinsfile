@@ -26,7 +26,7 @@ pipeline {
                   sonarsource/sonar-scanner-cli \
                   -Dsonar.projectKey=boutique \
                   -Dsonar.sources=src/frontend \
-                  -Dsonar.token="squ_65eea82ad743365ad2004e38dc16d017ef6f95a1"
+                  -Dsonar.login="squ_65eea82ad743365ad2004e38dc16d017ef6f95a1"
                 """
             }
         }
