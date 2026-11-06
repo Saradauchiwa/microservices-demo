@@ -18,7 +18,15 @@ pipeline {
         stage('2. Analyse Sécurité Code (SonarQube)') {
             steps {
                 echo '=== Étape 2 : Analyse statique du code (SAST) ==='
-                sh "curl -s -f ${SONAR_HOST}/api/system/status || echo 'SonarQube UP'"
+                // Scan du code avec sonar-scanner dans Docker
+                sh """
+                docker run --rm \
+                  -e SONAR_HOST_URL="${SONAR_HOST}" \
+                  -v "\$(pwd):/usr/src" \
+                  sonarsource/sonar-scanner-cli \
+                  -Dsonar.projectKey=boutique \
+                  -Dsonar.sources=src/frontend
+                """
             }
         }
 
