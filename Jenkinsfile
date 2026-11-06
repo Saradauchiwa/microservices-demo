@@ -5,6 +5,7 @@ pipeline {
         REGISTRY = '192.168.100.20:5000'
         IMAGE_NAME = 'frontend'
         SONAR_HOST = 'http://192.168.100.20:9000'
+        SONAR_TOKEN = 'squ_65eea82ad743365ad2004e38dc16d017ef6f95a1'
     }
 
     stages {
@@ -18,16 +19,19 @@ pipeline {
         stage('2. Analyse Sécurité Code (SonarQube)') {
             steps {
                 echo '=== Étape 2 : Analyse statique du code (SAST) ==='
-                // Scan de tous les microservices dans le dossier src
-                sh """
-                docker run --rm \
-                  -e SONAR_HOST_URL="${SONAR_HOST}" \
-                  -v "\$(pwd):/usr/src" \
-                  sonarsource/sonar-scanner-cli \
-                  -Dsonar.projectKey=boutique \
-                  -Dsonar.sources=src \
-                  -Dsonar.login="squ_65eea82ad743365ad2004e38dc16d017ef6f95a1"
-                """
+                // Analyse du code Go du frontend avec affichage direct dans SonarQube
+                dir('src/frontend') {
+                    sh """
+                    docker run --rm \
+                      -e SONAR_HOST_URL="${SONAR_HOST}" \
+                      -v "\$(pwd):/usr/src" \
+                      sonarsource/sonar-scanner-cli \
+                      -Dsonar.projectKey=boutique \
+                      -Dsonar.projectName="Boutique L3 TDSI" \
+                      -Dsonar.sources=. \
+                      -Dsonar.login="${SONAR_TOKEN}"
+                    """
+                }
             }
         }
 
