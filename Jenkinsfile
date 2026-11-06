@@ -28,6 +28,7 @@ pipeline {
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.sources=src \
           -Dsonar.exclusions=**/vendor/**,**/*.pb.go,**/node_modules/** \
+          -Dsonar.java.binaries=. \
           -Dsonar.scm.disabled=true
         """
     }
