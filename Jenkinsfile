@@ -21,7 +21,7 @@ pipeline {
             steps {
                 echo '=== Étape 2 : Analyse statique du code – SAST ==='
                 sh """
-                /opt/sonar-scanner/bin/sonar-scanner \
+                /opt/sonar-scanner/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner \
                   -Dsonar.projectKey=boutique \
                   -Dsonar.projectName="Boutique L3 TDSI" \
                   -Dsonar.host.url=${SONAR_HOST} \
