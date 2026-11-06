@@ -18,14 +18,14 @@ pipeline {
         stage('2. Analyse Sécurité Code (SonarQube)') {
             steps {
                 echo '=== Étape 2 : Analyse statique du code (SAST) ==='
-                // Scan du code avec authentification SonarQube
+                // Scan du code avec le point . pour analyser tout le code
                 sh """
                 docker run --rm \
                   -e SONAR_HOST_URL="${SONAR_HOST}" \
                   -v "\$(pwd):/usr/src" \
                   sonarsource/sonar-scanner-cli \
                   -Dsonar.projectKey=boutique \
-                  -Dsonar.sources=src/frontend \
+                  -Dsonar.sources=. \
                   -Dsonar.login="squ_65eea82ad743365ad2004e38dc16d017ef6f95a1"
                 """
             }
