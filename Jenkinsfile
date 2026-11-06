@@ -17,22 +17,21 @@ pipeline {
             }
         }
 
-        stage('2. Analyse Sécurité Code (SonarQube)') {
-            steps {
-                echo '=== Étape 2 : Analyse statique du code – SAST ==='
-                sh """
-                /opt/sonar-scanner/sonar-scanner-6.2.1.4610-linux-x64/bin/sonar-scanner \
-                  -Dsonar.projectKey=boutique \
-                  -Dsonar.projectName="Boutique L3 TDSI" \
-                  -Dsonar.host.url=${SONAR_HOST} \
-                  -Dsonar.login=${SONAR_TOKEN} \
-                  -Dsonar.sources=src \
-                  -Dsonar.exclusions=**/vendor/**,**/*.pb.go,**/node_modules/** \
-                  -Dsonar.scm.disabled=true
-                """
-            }
-        }
-
+       stage('2. Analyse Sécurité Code (SonarQube)') {
+    steps {
+        echo '=== Étape 2 : Analyse statique du code – SAST ==='
+        sh """
+        /opt/sonar-scanner/bin/sonar-scanner \
+          -Dsonar.projectKey=boutique \
+          -Dsonar.projectName="Boutique L3 TDSI" \
+          -Dsonar.host.url=${SONAR_HOST} \
+          -Dsonar.login=${SONAR_TOKEN} \
+          -Dsonar.sources=src \
+          -Dsonar.exclusions=**/vendor/**,**/*.pb.go,**/node_modules/** \
+          -Dsonar.scm.disabled=true
+        """
+    }
+}
         stage('3. Build Image Docker') {
             steps {
                 echo '=== Étape 3 : Construction de l image Docker ==='
